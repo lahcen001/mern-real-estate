@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import {getDownloadURL, getStorage,ref, uploadBytesResumable} from 'firebase/storage'
 import {app} from '../firebase'
+
+import {updateUserStart, updateUserSuccess, updateUserFailure ,deleteUserStart, deleteUserSuccess, deleteUserFailure  } from '../redux/user/userSlice';
+import {useDispatch} from 'react-redux';
+
 function Profile() {
   const fileInput = React.useRef(null)
   const {currentUser} = useSelector(state => state.user)
@@ -12,7 +16,7 @@ function Profile() {
     
   })
   
-
+const dispatch = useDispatch()
 
  useEffect(() => {
   if(file) {
@@ -42,13 +46,78 @@ const handleFileUpload = (file) => {
     
 }
 
+const handleChange =   (e) =>{
+  setFormData({...formData, [e.target.id]: e.target.value})
 
+
+ 
+}
+const handleSubmit =async (e) =>{
+  e.preventDefault()
+
+
+console.log(formData)
+
+
+
+
+  try {
+    dispatch(updateUserStart())
+
+const res  =  await fetch('http://localhost:3000/api/user/update/'+currentUser._id, {
+  method: 'put',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify(formData)
+})
+
+const data = await res.json()
+if(data.succes ==false){
+  dispatch(updateUserFailure(data.message))
+}
+
+
+  }catch(error){
+    dispatch(updateUserFailure(error))
+  }
+}
+
+
+
+const DeleteAccount = async (e) =>{
+   
+
+
+  try {
+    dispatch(deleteUserStart())
+    const res  =  await fetch('http://localhost:3000/api/user/delete/'+currentUser._id, {
+      mothod: 'delete',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      
+      }
+
+   )
+
+   const data  = await res.json()
+   if (data.success === false){
+   return  dispatch(deleteUserFailure(data.message))
+   }
+
+   dispatch(deleteUserSuccess(data))
+
+}catch(error){
+  dispatch(deleteUserFailure(error))
+}
+}
   return (
     <div  className='p-3 max-w-lg mx-auto'>
       <h1 className='text-3xl font-semibold text-center my-7'>Profile</h1>
-      <form  className='flex flex-col gap-2' action="">
+      <form  onSubmit={handleSubmit} className='flex flex-col gap-2' action="">
 
-         <input type='file' ref={fileInput} hidden  onChange={(e) => setFile(e.target.files[0])} />
+         <input  type='file' ref={fileInput} hidden  onChange={(e) => setFile(e.target.files[0])} />
         <img  accept='image/*' cursor='pointer'  onClick={() => fileInput.current.click()} src={formData.avatar ||currentUser.avatar} alt="profile"
          className="rounded-full w-24 h-24 obeject-cover cusrsor-pointer self-center mt-2"/>
 
@@ -60,25 +129,19 @@ const handleFileUpload = (file) => {
 
 
 
-
-
-
-
    </p>
 
 
-
-
         
-       <input type="text" placeholder='Username' className='border rounded-lg p-2 my-2' />
-       <input type="email" placeholder='Email' className='border rounded-lg p-2 my-2' />
-       <input type="password" placeholder='Password' className='border rounded-lg p-2 my-2' />
+       <input id='username' defaultValue={currentUser.username }  onChange={(e)=>handleChange(e)}  type="text" placeholder='Username' className='border rounded-lg p-2 my-2' />
+       <input  id='email' defaultValue={currentUser.email} onChange={(e)=>handleChange(e)}  type="email" placeholder='Email' className='border rounded-lg p-2 my-2' />
+       <input  id ='password' defaultValue={currentUser.password} onChange={(e)=>handleChange(e)} type="password" placeholder='Password' className='border rounded-lg p-2 my-2' />
 
 
-       <button className='bg-blue-700 text-white rounded-lg p-2 my-2 uppercase hover:opcacity-95  disabled:opacity-80'>Update</button>
+       <button type='submit' className='bg-blue-700 text-white rounded-lg p-2 my-2 uppercase hover:opcacity-95  disabled:opacity-80'>Update</button>
       </form>
       <div className='flex justify-between mt-5'>
-        <span className='text-red-700 cursor-pointer'>Delete Account</span>
+        <button  onClick={DeleteAccount} className='text-red-700 cursor-pointer'>Delete Account</button>
         <span className='text-red-700 cursor-pointer'>Sign out</span>
       </div>
     </div>
