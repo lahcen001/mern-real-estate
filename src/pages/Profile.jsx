@@ -5,6 +5,7 @@ import {app} from '../firebase'
 
 import {updateUserStart, updateUserSuccess, updateUserFailure ,deleteUserStart, deleteUserSuccess, deleteUserFailure  } from '../redux/user/userSlice';
 import {useDispatch} from 'react-redux';
+import {Link} from 'react-router-dom'
 
 function Profile() {
   const fileInput = React.useRef(null)
@@ -56,10 +57,6 @@ const handleSubmit =async (e) =>{
   e.preventDefault()
 
 
-console.log(formData)
-
-
-
 
   try {
     dispatch(updateUserStart())
@@ -67,7 +64,10 @@ console.log(formData)
 const res  =  await fetch('http://localhost:3000/api/user/update/'+currentUser._id, {
   method: 'put',
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'credentials': 'include',
+    'mode': 'cors'
+       
   },
   body: JSON.stringify(formData)
 })
@@ -112,6 +112,28 @@ const DeleteAccount = async (e) =>{
   dispatch(deleteUserFailure(error))
 }
 }
+
+
+const SignOut = async (e) => {
+  
+  try {
+    dispatch(deleteUserStart())
+    const res  =  await fetch('http://localhost:3000/api/auth/signout', {
+      mothod: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+    }
+   )
+}catch(error){
+  
+  dispatch(deleteUserFailure(error))
+}
+
+}
+
+
+
   return (
     <div  className='p-3 max-w-lg mx-auto'>
       <h1 className='text-3xl font-semibold text-center my-7'>Profile</h1>
@@ -139,10 +161,13 @@ const DeleteAccount = async (e) =>{
 
 
        <button type='submit' className='bg-blue-700 text-white rounded-lg p-2 my-2 uppercase hover:opcacity-95  disabled:opacity-80'>Update</button>
+
+
+       <Link className="bg-green-700 text-center  text-white uppercase rounded-lg p-2 " to="/create"> Create listining</Link>
       </form>
       <div className='flex justify-between mt-5'>
         <button  onClick={DeleteAccount} className='text-red-700 cursor-pointer'>Delete Account</button>
-        <span className='text-red-700 cursor-pointer'>Sign out</span>
+        <button onClick={SignOut} className='text-red-700 cursor-pointer'>Sign out</button>
       </div>
     </div>
   )
