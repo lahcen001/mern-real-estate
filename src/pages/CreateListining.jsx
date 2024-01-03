@@ -5,15 +5,30 @@ import {
   uploadBytesResumable,
   getDownloadURL,
 } from "firebase/storage";
+import useNavigate from "react-router-dom";
 import { app } from "../firebase";
 export default function CreateListining() {
   const [file, setFile] = useState([]);
   const [uploadImageError, setUploadImageError] = useState(false);
   const [progress, setProgress] = useState(0);
   const [uploadImage, setUploadImage] = useState(false);
+  const [error, setError] = useState(false);
+  
   const [formdata, setFormData] = useState({
     imagesUrl: [],
+    name: "",
+    description: "",
+    address: "",
+    bedrooms: 1,
+    bathrooms: 1,
+    furnished: false,
+    regularPrice: "",
+    discountedPrice: "",
+    offer: false,
+    parking: false,
+    type: "sell",
   });
+  const [loading, setLoading] = useState(false);
 
   const handleImageUpload = (e) => {
     setUploadImage(true);
@@ -53,8 +68,10 @@ export default function CreateListining() {
       uploadTask.on(
         "state_changed",
         (snapshot) => {
-          const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-          console.log('progress : ',progress);
+          const progress = Math.round(
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          );
+          console.log("progress : ", progress);
           setProgress(progress);
 
           switch (snapshot.state) {
@@ -85,6 +102,73 @@ export default function CreateListining() {
       imagesUrl: formdata.imagesUrl.filter((_, i) => i !== index),
     });
   };
+
+  const handleChange = (e) => {
+
+
+
+
+  
+    if (e.target.id === "sale" || e.target.id === "rent") {
+      setFormData({
+        ...formdata,
+        type: e.target.id,
+      });
+    }
+    if (
+      e.target.id === "furnished" ||
+      e.target.id === "parking" ||
+      e.target.id === "offer"
+    ) {
+
+  console.log("e.target.type :" + e.target.id);
+      setFormData({
+        ...formdata,
+        [e.target.id]: e.target.checked,
+      });
+    }
+
+    if (
+      e.target.type === "number" ||
+      e.target.type === "text" ||
+      e.target.type === "textarea"
+    ) {
+      setFormData({
+        ...formdata,
+        [e.target.id]: e.target.value,
+      });
+    }
+  };
+
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+ 
+  try{
+
+  if(formdata.imagesUrl.length < 1 ) return setError("You must upload at least image");
+   setLoading(true);
+setError(false)
+   const res = await fetch('http://localhost:3000/api/listing/create', {
+     method: 'POST',
+     headers: {
+      'Content-Type': 'application/json',
+      'accept': 'application/json',
+     },
+     body: JSON.stringify(formdata)
+   })
+
+   const data = await res.json();
+ setLoading(false);
+ if(data.success === false) return setError(data.message);
+useNavigate('/listings/'+data.data._id);
+}catch{
+   setLoading(false);
+  setError(true);
+}
+
+
+  }
+
   return (
     <main className="max-w-4xl p-3 mx-auto">
       <h1 className="text-3xl text-center my-7 font-bold">Create a Listing</h1>
@@ -96,7 +180,8 @@ export default function CreateListining() {
             placeholder="Name"
             required=""
             className="border p-3 rounded-lg"
-            value=""
+            value={formdata.name}
+            onChange={handleChange}
           />
           <textarea
             type="text"
@@ -104,34 +189,67 @@ export default function CreateListining() {
             placeholder="Description"
             required=""
             className="border p-3 rounded-lg"
-          ></textarea>
+            value={formdata.description}
+            onChange={handleChange}
+          />
           <input
             type="text"
             id="address"
             placeholder="Address"
             required=""
             className="border p-3 rounded-lg"
-            value=""
+            value={formdata.address}
+            onChange={handleChange}
           />
           <div className="flex gap-6 flex-wrap">
             <div className="flex gap-2">
-              <input type="checkbox" id="sale" className="w-5" />
+              <input
+                type="checkbox"
+                id="sale"
+                className="w-5"
+                checked={formdata.type === "sale"}
+                onChange={handleChange}
+              />
               <span>Sell</span>
             </div>
             <div className="flex gap-2">
-              <input type="checkbox" id="rent" className="w-5" checked="" />
+              <input
+                type="checkbox"
+                id="rent"
+                className="w-5"
+                checked={formdata.type === "rent"}
+                onChange={handleChange}
+              />
               <span>Rent</span>
             </div>
             <div className="flex gap-2">
-              <input type="checkbox" id="parking" className="w-5" />
+              <input
+                type="checkbox"
+                id="parking"
+                checked={formdata.parking}
+                onChange={handleChange}
+                className="w-5"
+              />
               <span>Parking spot</span>
             </div>
             <div className="flex gap-2">
-              <input type="checkbox" id="furnished" className="w-5" />
+              <input
+                type="checkbox"
+                id="furnished"
+                checked={formdata.furnished}
+                onChange={handleChange}
+                className="w-5"
+              />
               <span>Furnished</span>
             </div>
             <div className="flex gap-2">
-              <input type="checkbox" id="offer" className="w-5" />
+              <input
+                type="checkbox"
+                id="offer"
+                checked={formdata.offer}
+                onChange={handleChange}
+                className="w-5"
+              />
               <span>Offer</span>
             </div>
           </div>
@@ -144,7 +262,8 @@ export default function CreateListining() {
                 max="10"
                 required=""
                 className="p-3 border border-gray-300 rounded-lg"
-                value="1"
+                onChange={handleChange}
+                value={formdata.bedrooms}
               />
               <p>Beds</p>
             </div>
@@ -156,7 +275,8 @@ export default function CreateListining() {
                 max="10"
                 required=""
                 className="p-3 border border-gray-300 rounded-lg"
-                value="1"
+                onChange={handleChange}
+                value={formdata.bathrooms}
               />
               <p>Baths</p>
             </div>
@@ -168,7 +288,24 @@ export default function CreateListining() {
                 max="10000000"
                 required=""
                 className="p-3 border border-gray-300 rounded-lg"
-                value="0"
+                onChange={handleChange}
+                value={formdata.regularPrice}
+              />
+              <div className="flex flex-col items-center">
+                <p>Regular price </p>
+                <span className="text-xs">($ / Month)</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                id="discountedPrice"
+                min="50"
+                max="10000000"
+                required=""
+                className="p-3 border border-gray-300 rounded-lg"
+                onChange={handleChange}
+                value={formdata.discountedPrice}
               />
               <div className="flex flex-col items-center">
                 <p>Regular price </p>
@@ -204,8 +341,10 @@ export default function CreateListining() {
           <button
             type="submit"
             className="p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95 disabled:opacity-80"
+            
+            onClick={handleSubmit}
           >
-            Create Listing
+            {loading ? "Uploading..." : "Create Listing"}
           </button>
           <p className="text-red-700"> {uploadImageError}</p>
           {formdata.imagesUrl.length > 0 &&
