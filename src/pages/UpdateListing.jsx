@@ -1,20 +1,20 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   getStorage,
   ref,
   uploadBytesResumable,
   getDownloadURL,
 } from "firebase/storage";
-import {useNavigate, useParams} from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { app } from "../firebase";
-export default function CreateListining() {
+export default function UpdateListing() {
   const [file, setFile] = useState([]);
   const [uploadImageError, setUploadImageError] = useState(false);
   const [progress, setProgress] = useState(0);
   const [uploadImage, setUploadImage] = useState(false);
   const [error, setError] = useState(false);
-  const navigate = useNavigate()
-  const params = useParams();
+  const navigate = useNavigate();
+   const params = useParams();
   const [formdata, setFormData] = useState({
     imagesUrl: [],
     name: "",
@@ -28,7 +28,6 @@ export default function CreateListining() {
     offer: false,
     parking: false,
     type: "sell",
-   userRef: params.id
   });
   const [loading, setLoading] = useState(false);
 
@@ -39,25 +38,15 @@ export default function CreateListining() {
     if (file.length > 0 && file.length < 7) {
       const promies = [];
       for (let i = 0; i < file.length; i++) {
-
-        
         promies.push(storeImage(file[i]));
-
-
       }
-
-      
 
       Promise.all(promies)
         .then((urls) => {
-      
           setFormData({
             ...formdata,
             imagesUrl: urls,
           });
-
-        
-
           setUploadImage(false);
           setUploadImageError(false);
         })
@@ -83,7 +72,7 @@ export default function CreateListining() {
           const progress = Math.round(
             (snapshot.bytesTransferred / snapshot.totalBytes) * 100
           );
-          
+
           setProgress(progress);
 
           switch (snapshot.state) {
@@ -116,11 +105,6 @@ export default function CreateListining() {
   };
 
   const handleChange = (e) => {
-
-
-
-
-  
     if (e.target.id === "sale" || e.target.id === "rent") {
       setFormData({
         ...formdata,
@@ -132,8 +116,6 @@ export default function CreateListining() {
       e.target.id === "parking" ||
       e.target.id === "offer"
     ) {
-
-  
       setFormData({
         ...formdata,
         [e.target.id]: e.target.checked,
@@ -153,47 +135,63 @@ export default function CreateListining() {
   };
 
   const handleSubmit = async (e) => {
+   
+    e.preventDefault();
 
-console.log(" submitting... :", JSON.stringify(formdata));
+    try {
+      // if(formdata.imagesUrl.length < 1 ) return setError("You must upload at least image");
+      setLoading(true);
+      setError(false);
+      const res = await fetch("http://localhost:3000/api/listining/update/"+params.id, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          accept: "application/json",
+        },
+        body: JSON.stringify(formdata),
+      });
 
-  e.preventDefault();
- 
-  try{
+      const data = await res.json();
 
-   if(formdata.imagesUrl.length < 1 ) return setError("You must upload at least image");
-   setLoading(true);
-setError(false)
-   const res = await fetch(
-     "http://localhost:3000/api/listining/create",
-     {
-       method: "POST",
-       headers: {
-         "Content-Type": "application/json",
-         accept: "application/json",
-       },
-       body: JSON.stringify(formdata),
-     }
-   );
-
-   const data = await res.json();
-
- setLoading(false);
- if(data.success === false) return setError(data.message);
-    navigate("/listings/" + data._id);
-
+      setLoading(false);
+      if (data.success === false) return setError(data.message);
+      navigate("/listings/" + data._id);
+    } catch {
+      setLoading(false);
+      setError(true);
+    }
+  };
 
 
-}catch{
-   setLoading(false);
-  setError(true);
-}
+useEffect (() => {
+   
+  
+  GetListing();
+
+}, []);
 
 
-  }
+
+const GetListing = async () => {
+
+  
+  const res = await fetch(
+    "http://localhost:3000/api/listining/get/" + params.id,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  const data = await res.json();
+  if (data.length < 1) return;
+  setFormData(data);
+};
 
   return (
     <main className="max-w-4xl p-3 mx-auto">
-      <h1 className="text-3xl text-center my-7 font-bold">Create a Listing</h1>
+      <h1 className="text-3xl text-center my-7 font-bold">Update Listing</h1>
       <form className="flex gap-4 sm:flex-row flex-col">
         <div className="flex flex-col gap-4 flex-1">
           <input
