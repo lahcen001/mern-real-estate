@@ -1,15 +1,17 @@
 import React, { useState } from "react";
 import {FaSearch} from 'react-icons/fa'
-import {Link} from 'react-router-dom'
+import {Link, useNavigate} from 'react-router-dom'
 import {useSelector} from "react-redux";
 
  
 
 
 function Header() {
+  const navigate = useNavigate()
 const [searchTerm, setSearchTerm] = useState('')
 
    const {currentUser} = useSelector(state => state.user)
+   
 
 
 
@@ -17,6 +19,9 @@ const [searchTerm, setSearchTerm] = useState('')
   const handleSubmit = (e) => {
     e.preventDefault()
     const urlParams = new URLSearchParams(window.location.search)
+    urlParams.set('searchTerm', searchTerm)
+    const searchQuery = urlParams.toString()
+    navigate(`/search?${searchQuery}`)
   }
   return (
     <header className="bg-slate-200 shadow-md">
