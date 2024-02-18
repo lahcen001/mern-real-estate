@@ -118,6 +118,9 @@ const DeleteAccount = async (e) =>{
 const SignOut = async (e) => {
   
   try {
+
+
+
     dispatch(deleteUserStart())
     const res  =  await fetch('http://localhost:3000/api/auth/signout', {
       mothod: 'GET',
@@ -126,6 +129,10 @@ const SignOut = async (e) => {
       },
     }
    )
+
+localStorage.clear();
+window.location.reload(false);
+
 }catch(error){
   
   dispatch(deleteUserFailure(error))

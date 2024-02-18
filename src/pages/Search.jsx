@@ -112,13 +112,19 @@ export default function Search() {
      const startIndex = numberOfListings;
      const urlParams = new URLSearchParams(location.search);
      urlParams.set("startIndex", startIndex);
+     
      const searchQuery = urlParams.toString();
+     const res = await fetch(
+       `http://localhost:3000/api/listining/get?${searchQuery}`
+
+     )
      const data = await res.json();
+
      if(data.length <9){
       setShowMore(false);
      }
 
-
+    setListings([...listings, ...data]);
     
     
   }
@@ -221,15 +227,16 @@ export default function Search() {
           </button>
         </form>
       </div>
-      <div className="flex-wrap">
-        <div className="p-7   ">
+
+      <div className="flex flex-wrap justify-center gap-6 my-6">
+       
           {loading && listings && listings.length === 0 && (
             <h1 className="text-3xl font-semibold border-b p-3 text-slate-700  mt-5">
               No listings for this search
             </h1>
           )}
 
-          <div className=" flex-3  gap-4  ">
+        
             {listings &&
               listings.length > 0 &&
               listings.map((listing) => (
@@ -248,8 +255,8 @@ export default function Search() {
                 Show more
               </button>
             )}
-          </div>
-        </div>
+         
+     
       </div>
     </div>
   );
